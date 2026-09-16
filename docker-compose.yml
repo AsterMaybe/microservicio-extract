@@ -1,19 +1,4 @@
 services:
-  traefik:
-    image: traefik:v3.4
-    container_name: traefik
-    command:
-      - "--api.insecure=true"
-      - "--providers.docker=true"
-      - "--providers.docker.exposedbydefault=false"
-      - "--entrypoints.web.address=:80"
-    ports:
-      - "80:80"
-    volumes:
-      - "/var/run/docker.sock:/var/run/docker.sock:ro"
-    networks:
-      - choreographer-net
-
   app:
     build: .
     container_name: pdf-extract-service
@@ -25,8 +10,9 @@ services:
       CACHE_TTL_SECONDS: ${CACHE_TTL_SECONDS:-86400}
     labels:
       - "traefik.enable=true"
+      - "traefik.docker.network=choreographer-net"
       - "traefik.http.routers.pdf-extract.entrypoints=web"
-      - "traefik.http.routers.pdf-extract.rule=Host(`extract.localhost`) && PathPrefix(`/`)"
+      - "traefik.http.routers.pdf-extract.rule=Host(`extract.localhost`)"
       - "traefik.http.routers.pdf-extract.service=pdf-extract"
       - "traefik.http.services.pdf-extract.loadbalancer.server.port=8000"
     healthcheck:
@@ -37,7 +23,8 @@ services:
       start_period: 15s
     depends_on:
       - redis
-      - mongo
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     networks:
       - choreographer-net
       - internal
@@ -53,24 +40,8 @@ services:
     networks:
       - internal
 
-  mongo:
-    image: mongo:7
-    container_name: mongo
-    volumes:
-      - mongo-data:/data/db
-    healthcheck:
-      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    networks:
-      - internal
-
 networks:
   choreographer-net:
     external: true
   internal:
     driver: bridge
-
-volumes:
-  mongo-data:

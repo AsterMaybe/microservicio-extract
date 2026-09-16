@@ -44,17 +44,31 @@ uv run mypy app
   Repeat submissions with the same bytes are served from cache.
 - `GET /health` — liveness probe.
 
-## Run with Docker + Traefik
+## Run with Docker (monolith-local setup)
+
+This microservice does not run its own Traefik or Mongo — it reuses the
+monolith's. In the monolith's `docker-compose.yml`, attach its **Traefik** and
+its **Mongo** containers to the shared network:
+
+```yaml
+networks:
+  choreographer-net:
+    external: true
+# attach <traefik-service> and <mongo-service> to: choreographer-net
+```
+
+Then run:
 
 ```sh
-# the Traefik API gateway shares an external network with the choreographer
 docker network create choreographer-net   # one-time
-cp .env.example .env                      # optional overrides
+cp .env.example .env                      # set MONGODB_URI to your monolith's Mongo
 docker compose up --build
 ```
 
-The service is exposed on `:80` via Traefik with rule
-`Host('extract.localhost') && PathPrefix('/')`; the loadbalancer targets port
-`8000`. Change the `Host(...)` rule in `docker-compose.yml` to your real domain
-before deploying. Endpoint docs are served by the app at
-`http://extract.localhost/docs`.
+Routing works through the monolith's Traefik via the `Host('extract.localhost')`
+rule (labels on this container are auto-discovered), targeting the app on port
+`8000`. The monolith calls `POST http://extract.localhost/extract`. If the
+monolith Traefik's HTTP entrypoint is not named `web`, update the
+`traefik.http.routers.pdf-extract.entrypoints` label. Endpoint docs are served
+at `http://extract.localhost/docs`. Swap `extract.localhost` for a real domain
+at deploy time.
