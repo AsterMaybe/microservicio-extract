@@ -1,4 +1,5 @@
 from collections.abc import AsyncIterator, Awaitable, Callable
+from contextlib import asynccontextmanager
 from dataclasses import dataclass
 from typing import Any
 
@@ -25,6 +26,7 @@ class Runtime:
     close: Callable[[], Awaitable[None]] = _noop
 
 
+@asynccontextmanager
 async def default_runtime(settings: Settings) -> AsyncIterator[Runtime]:
     redis_client = Redis.from_url(settings.redis_url)
     cache = RedisCache(redis_client)
