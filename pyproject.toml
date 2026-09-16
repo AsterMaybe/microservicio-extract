@@ -55,7 +55,7 @@ ignore_missing_imports = true
 testpaths = ["tests"]
 pythonpath = ["."]
 asyncio_mode = "auto"
-addopts = "-ra --strict-markers --cov=app --cov-report=term-missing"
+addopts = "-ra --strict-markers --cov=app --cov-report=term-missing -m \"not integration\""
 markers = [
     "integration: requires live Redis/Mongo services",
 ]
