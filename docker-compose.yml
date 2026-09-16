@@ -26,7 +26,7 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
     networks:
-      - choreographer-net
+      - shared-network
       - internal
 
   redis:
@@ -41,7 +41,8 @@ services:
       - internal
 
 networks:
-  choreographer-net:
+  shared-network:
+    name: ${SHARED_NETWORK_NAME:-default-shared-network}
     external: true
   internal:
     driver: bridge
